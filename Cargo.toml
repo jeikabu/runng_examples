@@ -1,5 +1,5 @@
 [package]
-name = "runng"
+name = "runng_examples"
 version = "0.1.11"
 authors = ["Jake W <jeikabu@gmail.com>"]
 
@@ -26,8 +26,12 @@ stats = []
 backtrace = "0.3"
 futures = "0.1"
 log = "0.4"
-runng_derive = { version = "0.1", path = "../runng_derive" }
-runng-sys = { version = "1.1.1-rc", path = "../runng-sys" }
+#runng_derive = { version = "0.1", path = "../runng_derive" }
+#runng-sys = { version = "1.1.1-rc", path = "../nng-rust", package = "nng-sys" }
+runng = { version = "0.1", path = "../runng/runng" }
+
+[patch.crates-io]
+cty = { git = 'https://github.com/jeikabu/cty' }
 
 [dev-dependencies]
 clap = "2.32"

@@ -1,33 +1,20 @@
 [package]
 name = "runng_examples"
-version = "0.1.11"
+version = "0.1.0"
 authors = ["Jake W <jeikabu@gmail.com>"]
 
 description = "High-level wrapper around nng (Nanomsg-Next-Generation) aka Nanomsg2"
 keywords = ["nng", "nanomsg", "zeromq"]
 categories = ["network-programming"]
 license = "MIT"
-repository = "https://github.com/jeikabu/runng"
+repository = "https://github.com/jeikabu/runng_examples"
 readme = "README.md"
 edition = "2018"
-
-[badges]
-appveyor = { repository = "jake-ruyi/runng", branch = "master", service = "github" }
-travis-ci = { repository = "jeikabu/runng", branch = "master" }
-codecov = { repository = "jeikabu/runng", branch = "master", service = "github" }
-
-[features]
-default = ["pipes", "stats"]
-# NngPipe/nng_pipe
-pipes = []
-stats = []
 
 [dependencies]
 backtrace = "0.3"
 futures = "0.1"
 log = "0.4"
-#runng_derive = { version = "0.1", path = "../runng_derive" }
-#runng-sys = { version = "1.1.1-rc", path = "../nng-rust", package = "nng-sys" }
 runng = { version = "0.1", path = "../runng/runng" }
 
 [patch.crates-io]

@@ -7,20 +7,20 @@ use log::info;
 use runng::{protocol::Subscribe, *};
 use std::{thread, time::Duration};
 
-fn connect<T>(socket: T, url: &str, is_dial: bool) -> NngResult<T>
+fn connect<T>(socket: &mut T, url: &str, is_dial: bool) -> Result<()>
 where
     T: Dial + Listen,
 {
     if is_dial {
-        socket.dial(url)
+        socket.dial(url).and(Ok(()))
     } else {
-        socket.listen(url)
+        socket.listen(url).and(Ok(()))
     }
 }
 
 const PROTOCOLS: &[&str] = &["req0", "rep0", "pub0", "sub0", "push0", "pull0"];
 
-fn main() -> NngReturn {
+fn main() -> Result<()> {
     Builder::from_env(Env::default().default_filter_or("debug"))
         .try_init()
         .unwrap_or_else(|err| println!("env_logger::init() failed: {}", err));
@@ -37,9 +37,9 @@ fn main() -> NngReturn {
     if matches.is_present("req0") {
         let matches = matches.clone();
         let url = url.clone();
-        let sock = protocol::Req0::open()?;
-        let thread = thread::spawn(move || -> NngReturn {
-            let sock = connect(sock, &url, is_dial)?;
+        let mut sock = protocol::Req0::open()?;
+        let thread = thread::spawn(move || -> Result<()> {
+            connect(&mut sock, &url, is_dial)?;
             let reply = handle_data(&matches)?;
             handle_delay(&matches);
             if let Some(interval) = matches.value_of("interval") {
@@ -63,9 +63,9 @@ fn main() -> NngReturn {
     if matches.is_present("rep0") {
         let matches = matches.clone();
         let url = url.clone();
-        let sock = protocol::Rep0::open()?;
-        let thread = thread::spawn(move || -> NngReturn {
-            let sock = connect(sock, &url, is_dial)?;
+        let mut sock = protocol::Rep0::open()?;
+        let thread = thread::spawn(move || -> Result<()> {
+            connect(&mut sock, &url, is_dial)?;
             let reply = handle_data(&matches)?;
             //handle_delay(&matches);
             loop {
@@ -79,9 +79,9 @@ fn main() -> NngReturn {
     if matches.is_present("pub0") {
         let matches = matches.clone();
         let url = url.clone();
-        let sock = protocol::Pub0::open()?;
-        let thread = thread::spawn(move || -> NngReturn {
-            let sock = connect(sock, &url, is_dial)?;
+        let mut sock = protocol::Pub0::open()?;
+        let thread = thread::spawn(move || -> Result<()> {
+            connect(&mut sock, &url, is_dial)?;
             let msg = handle_data(&matches)?;
             handle_delay(&matches);
             if let Some(interval) = matches.value_of("interval") {
@@ -101,14 +101,14 @@ fn main() -> NngReturn {
     if matches.is_present("sub0") {
         let matches = matches.clone();
         let url = url.clone();
-        let sock = protocol::Sub0::open()?;
+        let mut sock = protocol::Sub0::open()?;
         let topic = matches
             .value_of("subscribe")
             .or(Some(""))
             .unwrap()
             .to_owned();
-        let thread = thread::spawn(move || -> NngReturn {
-            let sock = connect(sock, &url, is_dial)?;
+        let thread = thread::spawn(move || -> Result<()> {
+            connect(&mut sock, &url, is_dial)?;
             sock.subscribe(topic.as_bytes())?;
             let msg = sock.recvmsg()?;
             handle_received_msg(&matches, msg);
@@ -119,9 +119,9 @@ fn main() -> NngReturn {
     if matches.is_present("push0") {
         let matches = matches.clone();
         let url = url.clone();
-        let sock = protocol::Push0::open()?;
-        let thread = thread::spawn(move || -> NngReturn {
-            let sock = connect(sock, &url, is_dial)?;
+        let mut sock = protocol::Push0::open()?;
+        let thread = thread::spawn(move || -> Result<()> {
+            connect(&mut sock, &url, is_dial)?;
             let msg = handle_data(&matches)?;
             handle_delay(&matches);
             if let Some(interval) = matches.value_of("interval") {
@@ -141,9 +141,9 @@ fn main() -> NngReturn {
     if matches.is_present("pull0") {
         let matches = matches.clone();
         let url = url.clone();
-        let sock = protocol::Pull0::open()?;
-        let thread = thread::spawn(move || -> NngReturn {
-            let sock = connect(sock, &url, is_dial)?;
+        let mut sock = protocol::Pull0::open()?;
+        let thread = thread::spawn(move || -> Result<()> {
+            connect(&mut sock, &url, is_dial)?;
             loop {
                 let msg = sock.recvmsg()?;
                 handle_received_msg(&matches, msg);
@@ -159,8 +159,8 @@ fn main() -> NngReturn {
     Ok(())
 }
 
-fn handle_data<'a>(matches: &ArgMatches<'a>) -> NngResult<msg::NngMsg> {
-    let mut msg = msg::NngMsg::create()?;
+fn handle_data<'a>(matches: &ArgMatches<'a>) -> Result<msg::NngMsg> {
+    let mut msg = msg::NngMsg::new()?;
     if let Some(data) = matches.value_of("data") {
         msg.append_slice(data.as_bytes())?;
     }

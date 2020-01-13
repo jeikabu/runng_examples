@@ -10,28 +10,28 @@ cargo run --example runngcat -- --req0 --dial tcp://127.0.0.1:9823 --data hi
 
 use clap::{App, Arg, ArgMatches};
 use env_logger::{Builder, Env};
-use futures::{future::lazy, Future, Stream};
 use log::info;
-use runng::{asyncio::*, *};
+use runng::{asyncio::*, *, factory};
 
-fn main() -> NngReturn {
+#[tokio::main]
+async fn main() -> Result<()> {
     Builder::from_env(Env::default().default_filter_or("debug"))
         .try_init()
         .unwrap_or_else(|err| println!("env_logger::init() failed: {}", err));
 
     let matches = get_matches();
 
-    tokio::run(lazy(move || {
+    let handle = tokio::spawn(async move {
         let mut replier = create_echo(&matches).unwrap();
-        replier.receive().unwrap().for_each(move |msg| {
-            if let Ok(msg) = msg {
+        loop {
+            if let Ok(msg) = replier.receive().await {
                 info!("Echo {:?}", msg);
-                replier.reply(msg).wait().unwrap().unwrap();
+                replier.reply(msg).await.unwrap().unwrap();
             }
-
-            Ok(())
-        })
-    }));
+        }
+    });
+    let res = handle.await;
+    info!("Result = {:?}", res);
     Ok(())
 }
 
@@ -46,12 +46,12 @@ fn get_matches<'a>() -> ArgMatches<'a> {
         .get_matches()
 }
 
-fn create_echo<'a>(matches: &ArgMatches<'a>) -> NngResult<ReplyStreamHandle> {
+fn create_echo<'a>(matches: &ArgMatches<'a>) -> Result<ReplyAsyncHandle> {
     let url = matches.value_of("listen").unwrap();
-    let factory = Latest::default();
+    let factory = factory::latest::ProtocolFactory::default();
     let replier = factory
         .replier_open()?
         .listen(&url)?
-        .create_async_stream(1)?;
+        .create_async()?;
     Ok(replier)
 }

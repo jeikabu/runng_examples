@@ -13,19 +13,16 @@ edition = "2018"
 
 [dependencies]
 backtrace = "0.3"
-futures = "0.1"
+futures = { version = "0.3.0-alpha", package = "futures-preview" }
 log = "0.4"
-runng = { version = "0.1", path = "../runng/runng" }
-
-[patch.crates-io]
-cty = { git = 'https://github.com/jeikabu/cty' }
+runng = { version = "0.3", path = "../runng/runng" }
 
 [dev-dependencies]
-clap = "2.32"
+clap = "2.33"
 criterion = "0.2"
-env_logger = "0.6"
-futures-timer = "0.1"
-tokio = "0.1"
+env_logger = "0.7"
+futures-timer = "0.3"
+tokio = { version = "0.2", features = ["full"] }
 
 [[bench]]
 name = "reqrep_bench"
